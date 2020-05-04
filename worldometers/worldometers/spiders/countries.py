@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import scrapy
+import logging
 
 
 class CountriesSpider(scrapy.Spider):
@@ -18,4 +19,17 @@ class CountriesSpider(scrapy.Spider):
             # absalute_url = response.urljoin(link)
 
             # yield scrapy.Request(url=absalute_url)
-            yield response.follow(url=link)
+            yield response.follow(url=link, callback=self.parse_country, meta={'country_name': name})
+
+
+    def parse_country(self, response):
+        rows = response.xpath("(//table[@class='table table-striped table-bordered table-hover table-condensed table-list'])[1]/tbody/tr")
+        name = response.request.meta['country_name']
+        for row in rows:
+             year = row.xpath(".//td[1]/text()").get()
+             population = row.xpath(".//td[2]/strong/text()").get()
+             yield{
+                 'country_name': name, 
+                 'year': year, 
+                 'population': population
+             }
